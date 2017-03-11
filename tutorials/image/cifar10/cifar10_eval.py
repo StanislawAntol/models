@@ -77,6 +77,7 @@ def eval_once(saver, summary_writer, top_k_op, summary_op):
       #   /my-favorite-path/cifar10_train/model.ckpt-0,
       # extract global_step from it.
       global_step = ckpt.model_checkpoint_path.split('/')[-1].split('-')[-1]
+      print('Running model from global_step: {}'.format(global_step))
     else:
       print('No checkpoint file found')
       return
@@ -122,7 +123,8 @@ def evaluate():
 
     # Build a Graph that computes the logits predictions from the
     # inference model.
-    logits = cifar10.inference(images)
+    with tf.variable_scope('model'):
+      logits = cifar10.inference(images)
 
     # Calculate predictions.
     top_k_op = tf.nn.in_top_k(logits, labels, 1)

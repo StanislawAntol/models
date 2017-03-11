@@ -52,6 +52,10 @@ tf.app.flags.DEFINE_integer('max_steps', 1000000,
                             """Number of batches to run.""")
 tf.app.flags.DEFINE_boolean('log_device_placement', False,
                             """Whether to log device placement.""")
+tf.app.flags.DEFINE_integer('save_checkpoint_secs', 5*60,
+                            """Number of seconds between checkpoint saving.""")
+tf.app.flags.DEFINE_integer('save_summaries_steps', 50,
+                            """Number of steps between summary saving.""")
 
 
 def train():
@@ -59,12 +63,14 @@ def train():
   with tf.Graph().as_default():
     global_step = tf.contrib.framework.get_or_create_global_step()
 
-    # Get images and labels for CIFAR-10.
-    images, labels = cifar10.distorted_inputs()
+    with tf.variable_scope('input_processing') as scope:
+      # Get images and labels for CIFAR-10.
+      images, labels = cifar10.distorted_inputs()
 
-    # Build a Graph that computes the logits predictions from the
-    # inference model.
-    logits = cifar10.inference(images)
+    with tf.variable_scope('model') as scope:
+      # Build a Graph that computes the logits predictions from the
+      # inference model.
+      logits = cifar10.inference(images)
 
     # Calculate loss.
     loss = cifar10.loss(logits, labels)
@@ -99,6 +105,8 @@ def train():
 
     with tf.train.MonitoredTrainingSession(
         checkpoint_dir=FLAGS.train_dir,
+        save_checkpoint_secs=FLAGS.save_checkpoint_secs,
+        save_summaries_steps=FLAGS.save_summaries_steps,
         hooks=[tf.train.StopAtStepHook(last_step=FLAGS.max_steps),
                tf.train.NanTensorHook(loss),
                _LoggerHook()],

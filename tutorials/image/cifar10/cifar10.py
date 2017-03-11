@@ -295,7 +295,7 @@ def loss(logits, labels):
   return tf.add_n(tf.get_collection('losses'), name='total_loss')
 
 
-def _add_loss_summaries(total_loss):
+def _add_loss_summaries(total_loss, scope=None):
   """Add summaries for losses in CIFAR-10 model.
 
   Generates moving average for all losses and associated summaries for
@@ -308,7 +308,7 @@ def _add_loss_summaries(total_loss):
   """
   # Compute the moving average of all individual losses and the total loss.
   loss_averages = tf.train.ExponentialMovingAverage(0.9, name='avg')
-  losses = tf.get_collection('losses')
+  losses = tf.get_collection('losses', scope=scope)
   loss_averages_op = loss_averages.apply(losses + [total_loss])
 
   # Attach a scalar summary to all individual losses and the total loss; do the
@@ -316,8 +316,9 @@ def _add_loss_summaries(total_loss):
   for l in losses + [total_loss]:
     # Name each loss as '(raw)' and name the moving average version of the loss
     # as the original loss name.
-    tf.summary.scalar(l.op.name + ' (raw)', l)
-    tf.summary.scalar(l.op.name, loss_averages.average(l))
+    loss_name = re.sub('%s_[0-9]*/' % TOWER_NAME, '', l.op.name)
+    tf.summary.scalar(loss_name + ' (raw)', l)
+    tf.summary.scalar(loss_name, loss_averages.average(l))
 
   return loss_averages_op
 
