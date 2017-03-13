@@ -205,7 +205,7 @@ def train():
               ## final tower. Ideally, we should grab the updates from all towers
               ## but these stats accumulate extremely fast so we can ignore the
               ## other stats from the other towers without significant detriment.
-              #batchnorm_updates = tf.get_collection(tf.GraphKeys.UPDATE_OPS, scope)
+              batchnorm_updates = tf.get_collection(tf.GraphKeys.UPDATE_OPS, scope)
 
             # Calculate the gradients for the batch of data on this CIFAR tower.
             grads = opt.compute_gradients(loss)
@@ -241,8 +241,9 @@ def train():
                             tf.moving_average_variables())
     variables_averages_op = variable_averages.apply(variables_to_average)
     
-    #with tf.control_dependencies([apply_gradient_op, variables_averages_op].extend(batchnorm_updates)):
-    with tf.control_dependencies([apply_gradient_op, variables_averages_op]):
+    # Group all updates to into a single train op.
+    batchnorm_updates_op = tf.group(*batchnorm_updates)
+    with tf.control_dependencies([batchnorm_updates_op, variables_averages_op, apply_gradient_op]):
       train_op = tf.no_op(name='train')
       
     uninit = tf.report_uninitialized_variables()
