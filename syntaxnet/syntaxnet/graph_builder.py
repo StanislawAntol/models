@@ -64,7 +64,8 @@ def EmbeddingLookupFeatures(params, sparse_features, allow_weights):
     params = [params]
   # Lookup embeddings.
   sparse_features = tf.convert_to_tensor(sparse_features)
-  indices, ids, weights = gen_parser_ops.unpack_sparse_features(sparse_features)
+  indices, ids, weights = gen_parser_ops.unpack_syntax_net_sparse_features(
+      sparse_features)
   embeddings = tf.nn.embedding_lookup(params, ids)
 
   if allow_weights:
